@@ -1,0 +1,179 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "FNB API for Watson Assistant",
+        "version": "1.0.1",
+        "description": "API backend for Watson Assistant integration with OpenAI GPT"
+    },
+    "servers": [
+        {
+            "description": "Code Engine deployment",
+            "url": "https://{appname}.{projectid}.{region}.codeengine.appdomain.cloud",
+            "variables": {
+                "appname": {
+                    "default": "fnb-bot-backend",
+                    "description": "application name"
+                },
+                "projectid": {
+                    "default": "projectid",
+                    "description": "the Code Engine project ID"
+                },
+                "region": {
+                    "default": "us-south",
+                    "description": "the deployment region"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/": {
+            "get": {
+                "summary": "Health Check",
+                "description": "Health check endpoint for Cloud Engine",
+                "operationId": "healthCheck",
+                "responses": {
+                    "200": {
+                        "description": "Server is healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthCheck"
+                                },
+                                "example": {
+                                    "status": "healthy",
+                                    "message": "FNB API server is running"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/chat": {
+            "post": {
+                "summary": "Chat with GPT",
+                "description": "Watson Assistant webhook endpoint for GPT integration",
+                "operationId": "chatWithGPT",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WatsonRequest"
+                            },
+                            "example": {
+                                "text": "What are your banking hours?",
+                                "context": {
+                                    "conversation_id": "123",
+                                    "skill_id": "main_skill"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WatsonResponse"
+                                },
+                                "example": {
+                                    "response_type": "text",
+                                    "text": "Our banking hours are Monday to Friday, 9 AM to 5 PM.",
+                                    "context": {
+                                        "conversation_id": "123",
+                                        "last_gpt_response": "Our banking hours are Monday to Friday, 9 AM to 5 PM."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HealthCheck": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": ["healthy", "unhealthy"]
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": ["status", "message"]
+            },
+            "WatsonRequest": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The user input text from Watson Assistant",
+                        "minLength": 1,
+                        "maxLength": 2048
+                    },
+                    "context": {
+                        "type": "object",
+                        "description": "Watson Assistant context variables",
+                        "additionalProperties": true
+                    }
+                },
+                "required": ["text"]
+            },
+            "WatsonResponse": {
+                "type": "object",
+                "properties": {
+                    "response_type": {
+                        "type": "string",
+                        "enum": ["text"],
+                        "description": "Type of response being sent back to Watson Assistant"
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "The response text to be sent back to Watson Assistant"
+                    },
+                    "context": {
+                        "type": "object",
+                        "description": "Updated context variables to be passed back to Watson Assistant",
+                        "additionalProperties": true
+                    }
+                },
+                "required": ["response_type", "text"]
+            },
+            "Error": {
+                "type": "object",
+                "properties": {
+                    "response_type": {
+                        "type": "string",
+                        "enum": ["text"]
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "User-friendly error message"
+                    },
+                    "context": {
+                        "type": "object",
+                        "properties": {
+                            "error": {
+                                "type": "string",
+                                "description": "Technical error details"
+                            },
+                            "status_code": {
+                                "type": "integer",
+                                "description": "HTTP status code"
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                },
+                "required": ["response_type", "text"]
+            }
+        }
+    }
+}
